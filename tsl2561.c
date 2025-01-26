@@ -113,11 +113,12 @@ TSL2561StatusType TSL2561_Get_Id(TSLTypeDef *tsl2561) {
   result =
       TSL2561_Read_Byte(tsl2561, TSL2561_STATE_CMD | TSL2561_ID_REG, &recData);
   if (result == HAL_OK) {
-    /* Save part number (bits 7:4) */
-    tsl2561->partno = (TSL2561_PartNoType)((recData & 0xF0) >> 4);
 
     /* Save revision number (bits 3:0) */
     tsl2561->revno = (recData & 0x0F);
+    
+    /* Save part number (bits 7:4) */
+    tsl2561->partno = (TSL2561_PartNoType)((recData & 0xF0) >> 4);
 
     return TSL2561_OK;
   }
@@ -153,7 +154,10 @@ TSL2561StatusType TSL2561_Set_Gain(TSLTypeDef *tsl2561, TSL2561GainType gain) {
     recData &= ~(1 << 4);
 
     /* Set the new gain */
-    recData |= (gain << 4);
+    if (gain == TSL2561_LOW_GAIN)
+      recData &= ~(1U<<4);
+    else if (gain == TSL2561_HIGH_GAIN)
+      recData |= (1U<< 4);
 
     /* Write back to the timing register */
     result = TSL2561_Write_Byte(tsl2561, TSL2561_STATE_CMD | TSL2561_TIMING_REG,
@@ -192,7 +196,10 @@ TSL2561StatusType TSL2561_Manual_Start_Stop(TSLTypeDef *tsl2561,
     recData &= ~(1 << 3);
 
     /* Set the manual operation bit */
-    recData |= (operation << 3);
+    if (operation == TSL2561_MANUAL_STOP)
+      recData &= ~(1U<<3);
+    else if (operation == TSL2561_MANUAL_BEGIN)
+      recData |= (1U<<3);
 
     /* Write back to the timing register */
     result = TSL2561_Write_Byte(tsl2561, TSL2561_STATE_CMD | TSL2561_TIMING_REG,
